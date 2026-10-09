@@ -1,0 +1,321 @@
+import { ApifyClient } from 'apify-client';
+import { describe, expect, it } from 'vitest';
+
+import { HELPER_TOOLS } from '../../src/const.js';
+import type { ToolEntry } from '../../src/types.js';
+import { TOOL_TYPE } from '../../src/types.js';
+import { getToolPublicFieldOnly } from '../../src/utils/tools.js';
+import {
+    AUTO_INJECTED_TOOLS,
+    getToolsForServerMode,
+    isReportProblemExplicitlySelected,
+    loadToolsFromInput,
+    resolveActorsToLoad,
+    resolveToolNamesFromInput,
+    toolNamesToInput,
+} from '../../src/utils/tools_loader.js';
+
+const AUTO_INJECTED_TOOL_NAMES = AUTO_INJECTED_TOOLS.map((t) => t.name);
+
+describe('isReportProblemExplicitlySelected()', () => {
+    it('is true for the literal tool name', () => {
+        expect(isReportProblemExplicitlySelected({ tools: [HELPER_TOOLS.PROBLEM_REPORT] })).toBe(true);
+    });
+
+    it('is true for the tool name given as a plain string (not an array)', () => {
+        expect(isReportProblemExplicitlySelected({ tools: HELPER_TOOLS.PROBLEM_REPORT })).toBe(true);
+    });
+
+    it('is true for the dev category, its only member', () => {
+        expect(isReportProblemExplicitlySelected({ tools: ['dev'] })).toBe(true);
+    });
+
+    it('is false for an un-split comma-joined string — selector composition never sees it as one name', () => {
+        expect(isReportProblemExplicitlySelected({ tools: 'storage,report-problem' })).toBe(false);
+    });
+
+    it('is false when tools is absent (default injection, not an explicit opt-in)', () => {
+        expect(isReportProblemExplicitlySelected({})).toBe(false);
+    });
+
+    it('is false for an unrelated selector', () => {
+        expect(isReportProblemExplicitlySelected({ tools: ['actors'] })).toBe(false);
+    });
+});
+
+describe('loadToolsFromInput explicit-empty semantics', () => {
+    const apifyClient = new ApifyClient({ token: 'test-token' });
+
+    it('does not auto-add apps UI tools when tools are explicitly empty', async () => {
+        const tools = await loadToolsFromInput(
+            {
+                tools: [],
+            },
+            apifyClient,
+            'apps',
+        );
+
+        expect(tools).toHaveLength(0);
+    });
+
+    it('does not auto-add apps UI tools when actors are explicitly empty', async () => {
+        const tools = await loadToolsFromInput(
+            {
+                actors: [],
+            },
+            apifyClient,
+            'apps',
+        );
+
+        expect(tools).toHaveLength(0);
+    });
+
+    it('does not pair widgets whose base tool was not selected (apps mode, tools: ["docs"])', async () => {
+        const tools = await loadToolsFromInput(
+            {
+                tools: ['docs'],
+            },
+            apifyClient,
+            'apps',
+        );
+
+        const toolNames = tools.map((tool) => tool.name);
+        expect(toolNames).toContain(HELPER_TOOLS.DOCS_SEARCH);
+        expect(toolNames).toContain(HELPER_TOOLS.DOCS_FETCH);
+        // get-actor-run is not requested and not triggered by call-actor, so no widgets appear
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_RUNS_GET_WIDGET);
+        expect(toolNames).not.toContain(HELPER_TOOLS.STORE_SEARCH_WIDGET);
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_GET_DETAILS_WIDGET);
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_CALL_WIDGET);
+    });
+});
+
+describe('toolNamesToInput', () => {
+    it('keeps internal tool names in tools and moves actor names to actors', () => {
+        expect(toolNamesToInput([HELPER_TOOLS.STORE_SEARCH, 'apify/rag-web-browser'])).toEqual({
+            tools: [HELPER_TOOLS.STORE_SEARCH],
+            actors: ['apify/rag-web-browser'],
+        });
+    });
+
+    it('suppresses default categories when restoring only actor tools', () => {
+        expect(toolNamesToInput(['apify/rag-web-browser'])).toEqual({
+            tools: [],
+            actors: ['apify/rag-web-browser'],
+        });
+    });
+
+    it('classifies widget tool names as internal tools, not actor IDs', () => {
+        expect(toolNamesToInput([HELPER_TOOLS.STORE_SEARCH_WIDGET])).toEqual({
+            tools: [HELPER_TOOLS.STORE_SEARCH_WIDGET],
+        });
+    });
+
+    it('classifies get-actor-list (in no category) as an internal tool, not an actor ID', () => {
+        expect(toolNamesToInput([HELPER_TOOLS.ACTOR_LIST_GET])).toEqual({
+            tools: [HELPER_TOOLS.ACTOR_LIST_GET],
+        });
+    });
+
+    it('classifies delete-actor (in no category) as an internal tool, not an actor ID', () => {
+        expect(toolNamesToInput([HELPER_TOOLS.ACTOR_DELETE])).toEqual({
+            tools: [HELPER_TOOLS.ACTOR_DELETE],
+        });
+    });
+});
+
+describe('storage tool auto-injection', () => {
+    const apifyClient = new ApifyClient({ token: 'test-token' });
+
+    it('auto-injects storage and abort tools when call-actor is in the default tool set', () => {
+        const tools = getToolsForServerMode({}, [], 'default');
+        const toolNames = tools.map((t) => t.name);
+
+        expect(toolNames).toContain(HELPER_TOOLS.ACTOR_CALL);
+        expect(toolNames).toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+        for (const name of AUTO_INJECTED_TOOL_NAMES) expect(toolNames).toContain(name);
+
+        const callIndex = toolNames.indexOf(HELPER_TOOLS.ACTOR_CALL);
+        const runIndex = toolNames.indexOf(HELPER_TOOLS.ACTOR_RUNS_GET);
+        const datasetIndex = toolNames.indexOf(HELPER_TOOLS.DATASET_GET_ITEMS);
+        const kvIndex = toolNames.indexOf(HELPER_TOOLS.KEY_VALUE_STORE_RECORD_GET);
+        const abortIndex = toolNames.indexOf(HELPER_TOOLS.ACTOR_RUNS_ABORT);
+        expect(callIndex).toBeLessThan(runIndex);
+        expect(runIndex).toBeLessThan(datasetIndex);
+        expect(datasetIndex).toBeLessThan(kvIndex);
+        expect(kvIndex).toBeLessThan(abortIndex);
+    });
+
+    it('does not auto-inject storage or abort tools when no actor-touching tools are present', async () => {
+        const tools = await loadToolsFromInput({ tools: ['docs'] }, apifyClient);
+        const toolNames = tools.map((t) => t.name);
+
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_CALL);
+        for (const name of AUTO_INJECTED_TOOL_NAMES) expect(toolNames).not.toContain(name);
+    });
+
+    it('does not duplicate auto-injected tools when the storage category is also explicitly selected', async () => {
+        const tools = await loadToolsFromInput({ tools: ['actors', 'storage', 'runs'] }, apifyClient);
+        const toolNames = tools.map((t) => t.name);
+        for (const name of AUTO_INJECTED_TOOL_NAMES) {
+            expect(toolNames.filter((n) => n === name)).toHaveLength(1);
+        }
+    });
+
+    it('auto-injects storage tools when get-actor-run is present without call-actor (runs-only session)', async () => {
+        const tools = await loadToolsFromInput({ tools: ['runs'] }, apifyClient);
+        const toolNames = tools.map((t) => t.name);
+
+        expect(toolNames).toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_CALL);
+        for (const name of AUTO_INJECTED_TOOL_NAMES) expect(toolNames).toContain(name);
+    });
+
+    it.each(['default', 'apps'] as const)(
+        'auto-injects get-actor-run when only direct actor tools are present (%s mode)',
+        (mode) => {
+            const actorTool = {
+                type: TOOL_TYPE.ACTOR,
+                name: 'apify--rag-web-browser',
+                actorFullName: 'apify/rag-web-browser',
+            } as unknown as ToolEntry;
+            const tools = getToolsForServerMode({ actors: ['apify/rag-web-browser'], tools: [] }, [actorTool], mode);
+            const toolNames = tools.map((t) => t.name);
+
+            expect(toolNames).toContain('apify--rag-web-browser');
+            expect(toolNames).toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+            for (const name of AUTO_INJECTED_TOOL_NAMES) expect(toolNames).toContain(name);
+        },
+    );
+});
+
+describe('resolveToolNamesFromInput()', () => {
+    it('resolves tilde-separated Actor names to their served tool names', () => {
+        const toolNames = resolveToolNamesFromInput({ actors: ['apify~rag-web-browser'] }, 'apps');
+
+        expect(toolNames).toContain('apify--rag-web-browser');
+        expect(toolNames).not.toContain('apify~rag-web-browser');
+    });
+
+    it('leaves current-user Actor names unresolved while retaining their auto-injected tools', () => {
+        const toolNames = resolveToolNamesFromInput({ actors: ['~my-actor'] }, 'apps');
+
+        expect(toolNames).not.toContain('--my-actor');
+        expect(toolNames).not.toContain('~my-actor');
+        expect(toolNames).toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+    });
+
+    it('excludes opaque Actor IDs while retaining their auto-injected tools', () => {
+        const toolNames = resolveToolNamesFromInput({ actors: ['3ox4R101TgZz67sLr'] }, 'apps');
+
+        expect(toolNames).not.toContain('3ox4R101TgZz67sLr');
+        expect(toolNames).toContain(HELPER_TOOLS.ACTOR_RUNS_GET);
+    });
+});
+
+describe('getToolsForServerMode report-problem default injection', () => {
+    // report-problem lives in the `dev` category but is injected into the default (no-selectors)
+    // candidate set. Server-side servability gating is applied later in composeToolsForClient; here
+    // we only assert membership of the candidate set. See getToolsForServerMode in tools_loader.ts.
+    it('includes report-problem in the default set when no tools= selector is given', () => {
+        const toolNames = getToolsForServerMode({}, [], 'default').map((t) => t.name);
+        expect(toolNames).toContain(HELPER_TOOLS.PROBLEM_REPORT);
+    });
+
+    it('excludes report-problem under an explicit tools=storage selector', () => {
+        const toolNames = getToolsForServerMode({ tools: ['storage'] }, [], 'default').map((t) => t.name);
+        expect(toolNames).not.toContain(HELPER_TOOLS.PROBLEM_REPORT);
+    });
+
+    it('includes report-problem via the dev category selector (tools=dev)', () => {
+        const toolNames = getToolsForServerMode({ tools: ['dev'] }, [], 'default').map((t) => t.name);
+        expect(toolNames).toContain(HELPER_TOOLS.PROBLEM_REPORT);
+    });
+});
+
+describe('get-actor-list selection (in no category)', () => {
+    it('does not treat tools=get-actor-list as an Actor name', () => {
+        expect(resolveActorsToLoad({ tools: [HELPER_TOOLS.ACTOR_LIST_GET] })).toEqual([]);
+    });
+
+    it.each(['default', 'apps'] as const)('serves only get-actor-list for tools=get-actor-list in %s mode', (mode) => {
+        const toolNames = getToolsForServerMode({ tools: [HELPER_TOOLS.ACTOR_LIST_GET] }, [], mode).map((t) => t.name);
+        expect(toolNames).toEqual([HELPER_TOOLS.ACTOR_LIST_GET]);
+    });
+
+    it.each(['default', 'apps'] as const)('excludes get-actor-list from the default set in %s mode', (mode) => {
+        const toolNames = getToolsForServerMode({}, [], mode).map((t) => t.name);
+        expect(toolNames).not.toContain(HELPER_TOOLS.ACTOR_LIST_GET);
+    });
+
+    it.each(['default', 'apps'] as const)(
+        'serves the actors tools and get-actor-list for tools=actors,get-actor-list in %s mode',
+        (mode) => {
+            const tools = getToolsForServerMode({ tools: ['actors', HELPER_TOOLS.ACTOR_LIST_GET] }, [], mode);
+            const toolNames = tools.map((t) => t.name);
+            const actorsToolNames = getToolsForServerMode({ tools: ['actors'] }, [], mode).map((t) => t.name);
+            expect(toolNames).toEqual(expect.arrayContaining([...actorsToolNames, HELPER_TOOLS.ACTOR_LIST_GET]));
+
+            const searchActorsTool = tools.find((t) => t.name === HELPER_TOOLS.STORE_SEARCH);
+            const { description } = getToolPublicFieldOnly(searchActorsTool!, { presentTools: new Set(toolNames) });
+            expect(description).toContain(`Use ${HELPER_TOOLS.ACTOR_LIST_GET} for those.`);
+        },
+    );
+});
+
+// It deletes Actors permanently, so a session gets it only by naming it.
+describe('delete-actor selection (in no category)', () => {
+    it('does not treat tools=delete-actor as an Actor name', () => {
+        expect(resolveActorsToLoad({ tools: [HELPER_TOOLS.ACTOR_DELETE] })).toEqual([]);
+    });
+
+    it.each(['default', 'apps'] as const)('serves only delete-actor for tools=delete-actor in %s mode', (mode) => {
+        const toolNames = getToolsForServerMode({ tools: [HELPER_TOOLS.ACTOR_DELETE] }, [], mode).map((t) => t.name);
+        expect(toolNames).toEqual([HELPER_TOOLS.ACTOR_DELETE]);
+    });
+
+    it.each(['default', 'apps'] as const)(
+        'excludes delete-actor from the default set and the actors category in %s mode',
+        (mode) => {
+            expect(getToolsForServerMode({}, [], mode).map((t) => t.name)).not.toContain(HELPER_TOOLS.ACTOR_DELETE);
+            expect(getToolsForServerMode({ tools: ['actors'] }, [], mode).map((t) => t.name)).not.toContain(
+                HELPER_TOOLS.ACTOR_DELETE,
+            );
+        },
+    );
+
+    it.each(['default', 'apps'] as const)(
+        'serves the actors tools and delete-actor for tools=actors,delete-actor in %s mode',
+        (mode) => {
+            const toolNames = getToolsForServerMode({ tools: ['actors', HELPER_TOOLS.ACTOR_DELETE] }, [], mode).map(
+                (t) => t.name,
+            );
+            const actorsToolNames = getToolsForServerMode({ tools: ['actors'] }, [], mode).map((t) => t.name);
+            expect(toolNames).toEqual(expect.arrayContaining([...actorsToolNames, HELPER_TOOLS.ACTOR_DELETE]));
+        },
+    );
+});
+
+describe('loadToolsFromInput explicit widget selection', () => {
+    const apifyClient = new ApifyClient({ token: 'test-token' });
+
+    it('resolves an explicit widget name to the widget tool in apps mode', async () => {
+        const tools = await loadToolsFromInput({ tools: [HELPER_TOOLS.STORE_SEARCH_WIDGET] }, apifyClient, 'apps');
+        const toolNames = tools.map((t) => t.name);
+        expect(toolNames).toContain(HELPER_TOOLS.STORE_SEARCH_WIDGET);
+    });
+
+    it('does not duplicate the widget when both base and widget are explicitly selected', async () => {
+        const tools = await loadToolsFromInput(
+            { tools: [HELPER_TOOLS.STORE_SEARCH, HELPER_TOOLS.STORE_SEARCH_WIDGET] },
+            apifyClient,
+            'apps',
+        );
+        const toolNames = tools.map((t) => t.name);
+        // Base selected explicitly + widget selected explicitly + pairing pass would push widget again.
+        // The de-dup pass must collapse to exactly one widget entry.
+        expect(toolNames.filter((n) => n === HELPER_TOOLS.STORE_SEARCH_WIDGET)).toHaveLength(1);
+        expect(toolNames.filter((n) => n === HELPER_TOOLS.STORE_SEARCH)).toHaveLength(1);
+    });
+});

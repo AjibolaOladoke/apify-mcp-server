@@ -1,0 +1,36 @@
+on:
+    workflow_call:
+        inputs:
+            ref:
+                description: Git ref to publish (branch, tag, or commit SHA)
+                required: true
+                type: string
+
+jobs:
+    push_pkg_pr_new:
+        name: Push to pkg.pr.new
+        runs-on: ubuntu-latest
+
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v6
+                with:
+                    ref: ${{ inputs.ref }}
+
+            -   name: Use Node.js
+                uses: actions/setup-node@v6
+                with:
+                    node-version-file: '.nvmrc'
+
+            -   name: Install pnpm and dependencies
+                uses: apify/actions/pnpm-install@v1.1.2
+
+            -   name: Build
+                run: pnpm run build
+
+                # `pnpm dlx` instead of `npx` (which invokes npm — rejected at the repo
+                # root by devEngines.packageManager.onFail: error).
+                # `--pnpm` switches pkg-pr-new's internal packer from `npm pack` to
+                # `pnpm pack`; without it the tool would still shell out to npm pack
+                # inside the checkout and trigger EBADDEVENGINES (see pkg.pr.new README).
+            -   run: pnpm dlx pkg-pr-new publish --pnpm

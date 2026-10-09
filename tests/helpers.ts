@@ -1,0 +1,84 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { expect } from 'vitest';
+
+import type { SuiteClientOptions } from './test_kit/index.js';
+import { checkToken, resolveToken } from './test_kit/mcp_client.js';
+
+/** stdio client for this repo's dist/stdio.js. Honors the shared `options.token` contract. */
+export async function createMcpStdioClient(options?: SuiteClientOptions): Promise<Client> {
+    checkToken(options);
+    const { actors, tools, useEnv, telemetry, serverMode, payment } = options || {};
+    const args = ['dist/stdio.js'];
+    const token = resolveToken(options);
+    const env: Record<string, string> = {
+        ...(token ? { APIFY_TOKEN: token } : {}),
+    };
+
+    // Default telemetry to disabled for tests to avoid sending Sentry sessions and events
+    const telemetryEnabled = telemetry?.enabled ?? false;
+
+    // Set environment variables instead of command line arguments when useEnv is true
+    if (useEnv) {
+        if (actors !== undefined) {
+            env.ACTORS = actors.join(',');
+        }
+        if (tools !== undefined) {
+            env.TOOLS = tools.join(',');
+        }
+        env.TELEMETRY_ENABLED = telemetryEnabled.toString();
+        if (telemetry?.env !== undefined) {
+            env.TELEMETRY_ENV = telemetry.env;
+        }
+        if (serverMode !== undefined) {
+            env.UI_MODE = serverMode;
+        }
+        if (payment !== undefined) {
+            env.PAYMENT = payment;
+        }
+    } else {
+        // Use command line arguments as before
+        if (actors !== undefined) {
+            args.push('--actors', actors.join(','));
+        }
+        if (tools !== undefined) {
+            args.push('--tools', tools.join(','));
+        }
+        args.push('--telemetry-enabled', telemetryEnabled.toString());
+        if (telemetry?.env !== undefined && telemetryEnabled) {
+            args.push('--telemetry-env', telemetry.env);
+        }
+        if (serverMode !== undefined) {
+            args.push('--ui', serverMode);
+        }
+        if (payment !== undefined) {
+            args.push('--payment', payment);
+        }
+    }
+
+    const transport = new StdioClientTransport({
+        command: 'node',
+        args,
+        env,
+    });
+    const client = new Client({
+        name: options?.clientName || 'stdio-client',
+        version: '1.0.0',
+    });
+    if (options?.clientCapabilities) client.registerCapabilities(options.clientCapabilities);
+    await client.connect(transport);
+
+    return client;
+}
+
+/**
+ * Asserts that two arrays contain the same elements, regardless of order.
+ * @param array - The array to test
+ * @param values - The expected values
+ */
+export function expectArrayWeakEquals(array: unknown[], values: unknown[]): void {
+    expect(array.length).toBe(values.length);
+    for (const value of values) {
+        expect(array).toContainEqual(value);
+    }
+}

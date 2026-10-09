@@ -1,0 +1,32 @@
+name: Integration tests
+
+on:
+    workflow_call:
+        secrets:
+            APIFY_TOKEN:
+                required: true
+
+jobs:
+    integration_tests:
+        name: Integration tests
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v6
+            -   name: Use Node.js
+                uses: actions/setup-node@v6
+                with:
+                    node-version-file: '.nvmrc'
+            -   name: Install pnpm and dependencies
+                uses: apify/actions/pnpm-install@v1.1.2
+            -   name: Integration tests
+                env:
+                    APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+                run: pnpm run test:integration
+
+    conformance_tests:
+        needs: integration_tests
+        name: Conformance tests
+        uses: ./.github/workflows/_conformance_tests.yaml
+        secrets:
+            APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}

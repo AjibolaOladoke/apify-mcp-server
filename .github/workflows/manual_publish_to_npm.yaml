@@ -1,0 +1,72 @@
+name: Publish to NPM
+
+on:
+    workflow_dispatch:
+        inputs:
+            ref:
+                description: Git ref to publish (branch, tag, or commit SHA)
+                required: true
+                type: string
+            tag:
+                description: NPM dist-tag
+                required: true
+                type: choice
+                default: latest
+                options:
+                    - latest
+                    - beta
+
+permissions:
+    id-token: write # Required for OIDC
+    contents: read
+
+jobs:
+    publish_to_npm:
+        name: Publish to NPM
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v6
+                with:
+                    ref: ${{ inputs.ref }}
+            -   name: Use Node.js
+                uses: actions/setup-node@v6
+                with:
+                    node-version-file: .nvmrc
+                    registry-url: 'https://registry.npmjs.org'
+            -   name: Install pnpm and dependencies
+                uses: apify/actions/pnpm-install@v1.1.2
+            -   name: Check version consistency and bump pre-release version (beta only)
+                if: ${{ inputs.tag == 'beta' }}
+                run: node ./.github/scripts/before-beta-release.js
+            -   name: Build module
+                run: pnpm run build
+            -   name: Upload source maps to Sentry
+                if: ${{ inputs.tag == 'latest' }}
+                env:
+                      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+                # `pnpm exec` instead of `npx` because devEngines.packageManager is
+                # pinned to pnpm with onFail: error (npx invokes npm, which refuses to
+                # run with EBADDEVENGINES). `@sentry/cli` is already in devDependencies,
+                # so `pnpm exec` runs the locally-installed binary — no extra download.
+                run: |
+                      pnpm exec sentry-cli sourcemaps inject ./dist
+                      pnpm exec sentry-cli sourcemaps upload --release "$(jq -r '.version' package.json)" ./dist
+            -   name: Publish to NPM
+                # `pnpm publish` honours the dist-tag flag and is safe under our
+                # devEngines `onFail: error` pin (`npm publish` would be rejected).
+                # `--no-git-checks` skips pnpm's working-tree/branch guards — release
+                # tags & branches are validated upstream by the release workflow.
+                run: pnpm publish --tag ${{ inputs.tag }} --no-git-checks
+            -   name: Wait until the version is on the registry
+                # npm scans each version before it becomes installable: "typically around five
+                # minutes ... up to 15 minutes or more" (https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/).
+                # Jobs that run after this workflow (smoke test, internal repo bump) install
+                # the version right away, so don't finish until the registry serves it.
+                run: |
+                    version=$(jq -r '.version' package.json)
+                    for _ in $(seq 1 80); do
+                        curl -sf -o /dev/null "https://registry.npmjs.org/@apify%2factors-mcp-server/$version" && exit 0
+                        sleep 15
+                    done
+                    echo "::error::@apify/actors-mcp-server@$version is not on the registry after 20 minutes"
+                    exit 1

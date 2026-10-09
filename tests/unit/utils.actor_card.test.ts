@@ -1,0 +1,660 @@
+import type { Actor } from 'apify-client';
+import { describe, expect, it } from 'vitest';
+
+import { MAX_INPUT_FIELDS_IN_ACTOR_CARD } from '../../src/const.js';
+import type { ActorStoreInputSchema, ActorStoreList } from '../../src/types.js';
+import { formatActorToActorCard, formatActorToStructuredCard } from '../../src/utils/actor_card.js';
+
+// Mock Actor data for testing (based on real apify/rag-web-browser Actor)
+const mockActor: Actor = {
+    id: '3ox4R101TgZz67sLr',
+    userId: 'ZscMwFR5H7eCtWtyh',
+    name: 'rag-web-browser',
+    username: 'apify',
+    title: 'RAG Web Browser',
+    description: 'Web browser for OpenAI Assistants, RAG pipelines, or AI agents, similar to a web browser in ChatGPT.',
+    isPublic: true,
+    createdAt: new Date('2024-09-11T19:41:07.795Z'),
+    modifiedAt: new Date('2025-11-27T09:32:06.582Z'),
+    isDeprecated: false,
+    categories: ['AI', 'OPEN_SOURCE'],
+    stats: {
+        totalBuilds: 100,
+        totalRuns: 934350,
+        totalUsers: 8594,
+        totalUsers7Days: 370,
+        totalUsers30Days: 904,
+        totalUsers90Days: 1747,
+        lastRunStartedAt: new Date('2026-01-08T14:12:41.259Z'),
+        publicActorRunStats30Days: {
+            ABORTED: 185,
+            FAILED: 37,
+            SUCCEEDED: 68663,
+            'TIMED-OUT': 403,
+            TOTAL: 69395,
+        },
+        actorReviewCount: 14,
+        actorReviewRating: 4.94598340350167,
+        bookmarkCount: 170,
+    },
+    pricingInfos: [
+        {
+            pricingModel: 'PER_ACTOR_RUN',
+            pricePerUnitUsd: 0.25,
+            startedAt: new Date('2023-01-01T00:00:00Z'),
+        },
+    ],
+} as unknown as Actor;
+
+const mockActorStoreList: ActorStoreList = {
+    id: 'actor456',
+    name: 'store-actor',
+    username: 'community',
+    title: 'Store Actor',
+    description: 'A store listing actor for testing',
+    isDeprecated: false,
+    modifiedAt: new Date('2024-02-20T15:30:00Z'),
+    categories: ['WEB_SCRAPING', 'AI'],
+    actorReviewRating: 4.5,
+    bookmarkCount: 250,
+    currentPricingInfo: {
+        pricingModel: 'PRICE_PER_DATASET_ITEM',
+        pricePerUnitUsd: 0.5,
+    },
+    stats: {
+        totalBuilds: 10,
+        totalRuns: 10,
+        totalUsers: 2000,
+        totalUsers30Days: 800,
+        bookmarkCount: 250,
+        actorReviewCount: 14,
+        actorReviewRating: 4.5,
+        publicActorRunStats30Days: {
+            SUCCEEDED: 85,
+            TOTAL: 100,
+        },
+    },
+} as unknown as ActorStoreList;
+
+const mockDeprecatedActor: Actor = {
+    ...mockActor,
+    id: 'deprecated123',
+    name: 'deprecated-actor',
+    title: 'Deprecated RAG Browser',
+    isDeprecated: true,
+} as unknown as Actor;
+
+function buildInputSchema(fieldCount: number): ActorStoreInputSchema {
+    const properties: ActorStoreInputSchema['properties'] = {};
+    for (let i = 0; i < fieldCount; i++) {
+        properties[`field${i}`] = { type: 'string' };
+    }
+
+    return {
+        type: 'object',
+        properties,
+        required: Object.keys(properties),
+    };
+}
+
+describe('formatActorToActorCard', () => {
+    describe('backwards compatibility (no options)', () => {
+        it('includes all sections when no options are provided', () => {
+            const result = formatActorToActorCard(mockActor);
+
+            // Should include title and URL (always present)
+            expect(result).toContain('## [RAG Web Browser](https://apify.com/apify/rag-web-browser)');
+            expect(result).toContain('- **URL:** https://apify.com/apify/rag-web-browser');
+
+            // Should include description text
+            expect(result).toContain('- **Description:** Web browser for OpenAI Assistants, RAG pipelines');
+
+            // Should include pricing
+            expect(result).toContain('- **[Pricing](https://apify.com/apify/rag-web-browser/pricing):**');
+
+            // Should include stats
+            expect(result).toContain('- **Stats:**');
+            expect(result).toContain('8,594 total users');
+            expect(result).toContain('904 monthly users');
+
+            // Should include rating (from stats)
+            expect(result).toContain('- **Rating:** 4.95 out of 5');
+
+            // Should include metadata (developer, categories, modified date)
+            expect(result).toContain('- **Developed by:** [apify](https://apify.com/apify) (Apify)');
+            expect(result).toContain('- **Categories:** AI, Open Source');
+            expect(result).toContain('- **Last modified:** 2025-11-27T09:32:06.582Z');
+        });
+
+        it('includes deprecation warning for deprecated actors', () => {
+            const result = formatActorToActorCard(mockDeprecatedActor);
+            expect(result).toContain('>This Actor is deprecated and may not be maintained anymore.');
+        });
+
+        it('includes rating for ActorStoreList', () => {
+            const result = formatActorToActorCard(mockActorStoreList);
+            expect(result).toContain('- **Rating:** 4.50 out of 5');
+        });
+
+        it('includes categories for ActorStoreList', () => {
+            const result = formatActorToActorCard(mockActorStoreList);
+            expect(result).toContain('- **Categories:** Web Scraping, AI');
+        });
+    });
+
+    describe('granular options - includeDescription', () => {
+        it('includes only title and URL when all options are false', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            // Should include title and URL
+            expect(result).toContain('## [RAG Web Browser](https://apify.com/apify/rag-web-browser)');
+            expect(result).toContain('- **URL:** https://apify.com/apify/rag-web-browser');
+
+            // Should NOT include description section
+            expect(result).not.toContain('- **Developed by:**');
+            expect(result).not.toContain('- **Description:**');
+            expect(result).not.toContain('- **Categories:**');
+
+            // Should NOT include other sections
+            expect(result).not.toContain('- **Pricing');
+            expect(result).not.toContain('- **Stats:**');
+            expect(result).not.toContain('- **Rating:**');
+            expect(result).not.toContain('- **Last modified:**');
+        });
+
+        it('includes only description text when includeDescription is true', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: true,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **Description:** Web browser for OpenAI Assistants');
+            expect(result).not.toContain('- **Developed by:**');
+            expect(result).not.toContain('- **Categories:**');
+            expect(result).not.toContain('- **Stats:**');
+            expect(result).not.toContain('- **Pricing');
+            expect(result).not.toContain('- **Last modified:**');
+        });
+    });
+
+    describe('granular options - includeStats', () => {
+        it('includes only stats when includeStats is true', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **Stats:**');
+            expect(result).toContain('8,594 total users');
+            expect(result).not.toContain('- **Developed by:**');
+            expect(result).not.toContain('- **Pricing');
+        });
+
+        it('includes bookmark count from Actor.stats', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('170 bookmarks');
+        });
+    });
+
+    describe('granular options - includePricing', () => {
+        it('includes only pricing when includePricing is true', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: true,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **[Pricing](https://apify.com/apify/rag-web-browser/pricing):**');
+            expect(result).not.toContain('- **Stats:**');
+            expect(result).not.toContain('- **Developed by:**');
+        });
+    });
+
+    describe('granular options - includeRating', () => {
+        it('includes rating when includeRating is true for ActorStoreList', () => {
+            const result = formatActorToActorCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: true,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **Rating:** 4.50 out of 5');
+            expect(result).not.toContain('- **Stats:**');
+        });
+
+        it('does not include rating when includeRating is false', () => {
+            const result = formatActorToActorCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).not.toContain('- **Rating:**');
+        });
+    });
+
+    describe('granular options - includeMetadata', () => {
+        it('includes metadata (developer, categories, modified date) when includeMetadata is true', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: true,
+            });
+
+            expect(result).toContain('- **Developed by:** [apify](https://apify.com/apify) (Apify)');
+            expect(result).toContain('- **Categories:** AI, Open Source');
+            expect(result).toContain('- **Last modified:** 2025-11-27T09:32:06.582Z');
+            expect(result).not.toContain('- **Description:**');
+            expect(result).not.toContain('- **Stats:**');
+            expect(result).not.toContain('- **Pricing');
+        });
+
+        it('includes deprecation warning when includeMetadata is true', () => {
+            const result = formatActorToActorCard(mockDeprecatedActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: true,
+            });
+
+            expect(result).toContain('>This Actor is deprecated and may not be maintained anymore.');
+        });
+
+        it('does not include metadata when includeMetadata is false', () => {
+            const result = formatActorToActorCard(mockDeprecatedActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).not.toContain('- **Last modified:**');
+            expect(result).not.toContain('>This Actor is deprecated');
+        });
+    });
+
+    describe('granular options - combinations', () => {
+        it('includes description and pricing only', () => {
+            const result = formatActorToActorCard(mockActor, {
+                includeDescription: true,
+                includeStats: false,
+                includePricing: true,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **Description:**');
+            expect(result).toContain('- **[Pricing](https://apify.com/apify/rag-web-browser/pricing):**');
+            expect(result).not.toContain('- **Developed by:**');
+            expect(result).not.toContain('- **Categories:**');
+            expect(result).not.toContain('- **Stats:**');
+            expect(result).not.toContain('- **Last modified:**');
+        });
+
+        it('includes stats and rating only', () => {
+            const result = formatActorToActorCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: true,
+                includeMetadata: false,
+            });
+
+            expect(result).toContain('- **Stats:**');
+            expect(result).toContain('- **Rating:**');
+            expect(result).not.toContain('- **Developed by:**');
+            expect(result).not.toContain('- **Pricing');
+        });
+    });
+});
+
+describe('formatActorToStructuredCard', () => {
+    describe('backwards compatibility (no options)', () => {
+        it('includes all fields when no options are provided', () => {
+            const result = formatActorToStructuredCard(mockActor);
+
+            // Should always include
+            expect(result.title).toBe('RAG Web Browser');
+            expect(result.url).toBe('https://apify.com/apify/rag-web-browser');
+            expect(result.fullName).toBe('apify/rag-web-browser');
+
+            // Should include description text
+            expect(result.description).toContain('Web browser for OpenAI Assistants');
+
+            // Should include pricing
+            expect(result.pricing).toBeDefined();
+            expect(result.pricing.model).toBe('PER_ACTOR_RUN');
+
+            // Should include stats
+            expect(result.stats).toBeDefined();
+            expect(result.stats?.totalUsers).toBe(8594);
+            expect(result.stats?.monthlyUsers).toBe(904);
+
+            // Should include rating
+            expect(result.rating).toBeDefined();
+            expect(result.rating?.average).toBe(4.95);
+            expect(result.rating?.count).toBe(14);
+
+            // Should include metadata (developer, categories, dates, deprecation)
+            expect(result.developer.username).toBe('apify');
+            expect(result.developer.isOfficialApify).toBe(true);
+            expect(result.categories).toEqual(['AI', 'Open Source']);
+            expect(result.modifiedAt).toBe('2025-11-27T09:32:06.582Z');
+            expect(result.isDeprecated).toBe(false);
+        });
+
+        it('includes rating for ActorStoreList', () => {
+            const result = formatActorToStructuredCard(mockActorStoreList);
+            expect(result.rating).toBeDefined();
+        });
+    });
+
+    describe('granular options - includeDescription', () => {
+        it('excludes description section when includeDescription is false', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            // Should always include
+            expect(result.title).toBe('RAG Web Browser');
+            expect(result.url).toBe('https://apify.com/apify/rag-web-browser');
+            expect(result.fullName).toBe('apify/rag-web-browser');
+
+            // Should have empty/default values for description section
+            expect(result.developer.username).toBe('');
+            expect(result.description).toBe('');
+            expect(result.categories).toEqual([]);
+        });
+
+        it('includes only description text when includeDescription is true', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: true,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.description).toContain('Web browser for OpenAI Assistants');
+            expect(result.developer.username).toBe(''); // Default value, not filled
+            expect(result.categories).toEqual([]); // Default value, not filled
+            expect(result.stats).toBeUndefined();
+        });
+    });
+
+    describe('granular options - includeStats', () => {
+        it('excludes stats when includeStats is false', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.stats).toBeUndefined();
+        });
+
+        it('includes stats when includeStats is true', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.stats).toBeDefined();
+            expect(result.stats?.totalUsers).toBe(8594);
+            expect(result.stats?.monthlyUsers).toBe(904);
+        });
+
+        it('includes bookmarks from Actor.stats', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.stats?.bookmarks).toBe(170);
+        });
+    });
+
+    describe('granular options - includePricing', () => {
+        it('includes default pricing when includePricing is false', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            // Should have default pricing
+            expect(result.pricing.model).toBe('FREE');
+        });
+
+        it('includes actual pricing when includePricing is true', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: true,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.pricing.model).toBe('PER_ACTOR_RUN');
+        });
+    });
+
+    describe('granular options - includeRating', () => {
+        it('excludes rating when includeRating is false', () => {
+            const result = formatActorToStructuredCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.rating).toBeUndefined();
+        });
+
+        it('includes rating when includeRating is true', () => {
+            const result = formatActorToStructuredCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: true,
+                includeMetadata: false,
+            });
+
+            expect(result.rating).toBeDefined();
+        });
+    });
+
+    describe('granular options - includeMetadata', () => {
+        it('excludes metadata when includeMetadata is false', () => {
+            const result = formatActorToStructuredCard(mockDeprecatedActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.modifiedAt).toBeUndefined();
+            expect(result.isDeprecated).toBe(false); // Default value
+        });
+
+        it('includes metadata (developer, categories, dates, deprecation) when includeMetadata is true', () => {
+            const result = formatActorToStructuredCard(mockDeprecatedActor, {
+                includeDescription: false,
+                includeStats: false,
+                includePricing: false,
+                includeRating: false,
+                includeMetadata: true,
+            });
+
+            expect(result.developer.username).toBe('apify');
+            expect(result.developer.isOfficialApify).toBe(true);
+            expect(result.categories).toEqual(['AI', 'Open Source']);
+            expect(result.modifiedAt).toBe('2025-11-27T09:32:06.582Z');
+            expect(result.isDeprecated).toBe(true);
+        });
+    });
+
+    describe('granular options - combinations', () => {
+        it('includes only requested sections (description + pricing)', () => {
+            const result = formatActorToStructuredCard(mockActor, {
+                includeDescription: true,
+                includeStats: false,
+                includePricing: true,
+                includeRating: false,
+                includeMetadata: false,
+            });
+
+            expect(result.description).toContain('Web browser for OpenAI Assistants');
+            expect(result.pricing.model).toBe('PER_ACTOR_RUN');
+            expect(result.developer.username).toBe(''); // Not included (metadata is false)
+            expect(result.categories).toEqual([]); // Not included (metadata is false)
+            expect(result.stats).toBeUndefined();
+            expect(result.rating).toBeUndefined();
+            expect(result.modifiedAt).toBeUndefined();
+        });
+
+        it('includes only requested sections (stats + rating)', () => {
+            const result = formatActorToStructuredCard(mockActorStoreList, {
+                includeDescription: false,
+                includeStats: true,
+                includePricing: false,
+                includeRating: true,
+                includeMetadata: false,
+            });
+
+            expect(result.stats).toBeDefined();
+            expect(result.rating).toBeDefined();
+            expect(result.developer.username).toBe('');
+            expect(result.modifiedAt).toBeUndefined();
+        });
+    });
+});
+
+describe('formatActorToStructuredCard inputSchema truncation', () => {
+    it('truncates inputFields and marks incomplete schemas', () => {
+        const total = MAX_INPUT_FIELDS_IN_ACTOR_CARD + 5;
+        const actor = { ...mockActorStoreList, inputSchema: buildInputSchema(total) } as ActorStoreList;
+        const result = formatActorToStructuredCard(actor);
+
+        expect(Object.keys(result.inputFields?.properties ?? {})).toHaveLength(MAX_INPUT_FIELDS_IN_ACTOR_CARD);
+        expect(result.inputFields?.properties[`field${MAX_INPUT_FIELDS_IN_ACTOR_CARD - 1}`]).toStrictEqual({
+            type: 'string',
+        });
+        expect(result.inputFields?.properties[`field${MAX_INPUT_FIELDS_IN_ACTOR_CARD}`]).toBeUndefined();
+        expect(result.inputFields?.required).toEqual(
+            Array.from({ length: MAX_INPUT_FIELDS_IN_ACTOR_CARD }, (_, index) => `field${index}`),
+        );
+        expect(result.inputFieldsTruncated).toBe(true);
+        expect(result.inputFieldsTotalCount).toBe(total);
+    });
+
+    it('leaves inputFields unchanged when schema fits under the cap', () => {
+        const inputSchema: ActorStoreInputSchema = {
+            type: 'object',
+            properties: {
+                url: { type: 'string' },
+                maxResults: { type: 'number' },
+            },
+            required: ['url'],
+        };
+        const actor = { ...mockActorStoreList, inputSchema } as ActorStoreList;
+        const result = formatActorToStructuredCard(actor);
+
+        expect(result.inputFields).toStrictEqual(inputSchema);
+        expect(result.inputFieldsTruncated).toBeUndefined();
+        expect(result.inputFieldsTotalCount).toBeUndefined();
+    });
+});
+
+describe('formatActorToActorCard inputSchema rendering', () => {
+    const inputSchema = {
+        type: 'object' as const,
+        properties: {
+            url: { type: 'string' },
+            maxResults: { type: 'number' },
+        },
+        required: ['url'],
+    };
+
+    it('renders input fields as a TypeScript-like inline list with required marker', () => {
+        const actor = { ...mockActorStoreList, inputSchema } as ActorStoreList;
+        const result = formatActorToActorCard(actor);
+        expect(result).toContain('- **Input fields:** url: string, maxResults?: number');
+        expect(result).not.toMatch(/\(\+\d+ more\)/);
+    });
+
+    it(`truncates to MAX_INPUT_FIELDS_IN_ACTOR_CARD and appends "... (+N more)" when count exceeds the cap`, () => {
+        const overflow = 5;
+        const total = MAX_INPUT_FIELDS_IN_ACTOR_CARD + overflow;
+        const properties: Record<string, { type: string }> = {};
+        for (let i = 0; i < total; i++) properties[`field${i}`] = { type: 'string' };
+        const actor = { ...mockActorStoreList, inputSchema: { type: 'object' as const, properties } } as ActorStoreList;
+        const result = formatActorToActorCard(actor);
+        expect(result).toContain(`field${MAX_INPUT_FIELDS_IN_ACTOR_CARD - 1}?: string`);
+        expect(result).not.toContain(`field${MAX_INPUT_FIELDS_IN_ACTOR_CARD}?: string`);
+        expect(result).toContain(` ... (+${overflow} more)`);
+    });
+
+    it('joins mixed-type property arrays with `|`', () => {
+        const actor = {
+            ...mockActorStoreList,
+            inputSchema: { type: 'object' as const, properties: { mixed: { type: ['string', 'integer'] } } },
+        } as unknown as ActorStoreList;
+        const result = formatActorToActorCard(actor);
+        expect(result).toContain('- **Input fields:** mixed?: string|integer');
+    });
+
+    it('omits the input fields line when inputSchema has no properties', () => {
+        const actor = {
+            ...mockActorStoreList,
+            inputSchema: { type: 'object' as const, properties: {} },
+        } as ActorStoreList;
+        const result = formatActorToActorCard(actor);
+        expect(result).not.toContain('Input fields');
+    });
+});
