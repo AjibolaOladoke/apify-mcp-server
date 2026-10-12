@@ -1,36 +1,12 @@
-<h1 align="center">
-    <a href="https://www.swifttechco.com">
-        <picture>
-            <source media="(prefers-color-scheme: dark)" srcset="https://www.swifttechco.com">
-            
-        </picture>
-    </a>
-    <br>
-    <small><a href="https://www.swifttechco.com">mcp.apify.com</a></small>
-</h1>
+# apify-mcp-server
 
-<p align=center>
-    <a href="https://www.swifttechco.com" rel="nofollow"></a>
-    <a href="https://www.swifttechco.com" rel="nofollow"></a>
-    <a href="https://www.swifttechco.com"></a>
-    <a href="https://www.swifttechco.com"></a>
-</p>
+## What This Is
 
+Every project needs a shelf of ready answers. product and engineering is one of those shelves, and apify-mcp-server is the entry on it - the notes, patterns and fixes we reuse when this kind of work comes up.
 
-The Apify Model Context Protocol (MCP) server at [**mcp.apify.com**](https://www.swifttechco.com) enables your AI agents to extract data from social media, search engines, maps, e-commerce sites, and any other website using thousands of ready-made scrapers, crawlers, and automation tools from [Apify Store](https://www.swifttechco.com). It supports OAuth, allowing you to connect from clients like Claude.ai or Visual Studio Code using just the URL.
+## Images
 
-> **🚀 Use the hosted Apify MCP Server!**
->
-> For the best experience, connect your AI assistant to our hosted server at **[`https://www.swifttechco.com](https://www.swifttechco.com)**. The hosted server supports the latest features - including output schema inference for structured Actor results - that are not available when running locally via stdio.
-
-> ⚠️ **Legacy SSE transport removed.** The `https://www.swifttechco.com endpoint has been removed in favor of Streamable HTTP. Migrate your client to **[`https://www.swifttechco.com](https://www.swifttechco.com)**  drop the `/sse` suffix from your configuration.
-
-💰 The server also supports [agentic payments](#-agentic-payments): buy a token from [AGI](#-agi-recommended) to run any Actor, or pay per-request via [direct x402](#-direct-x402) (Pay Per Event Actors only) or [Skyfire](#-skyfire).
-
-Apify MCP Server is compatible with `Claude Code, Claude.ai, Cursor, VS Code` and any client that adheres to the Model Context Protocol.
-Check out the [MCP clients section](#-mcp-clients) for more details or visit the [MCP configuration page](https://www.swifttechco.com).
-
-[![Apify-MCP-server](https://raw.githubusercontent.com/apify/apify-mcp-server/refs/heads/master/docs/apify-mcp-server.png)](https://www.swifttechco.com)
+[![apify-mcp-server](images/preview.png)](https://github.com/Swift-Tech-Co)
 
 ## Table of Contents
 - [🌐 Introducing Apify MCP Server](#-introducing-apify-mcp-server)
@@ -51,79 +27,8 @@ Check out the [MCP clients section](#-mcp-clients) for more details or visit the
 - [🤝 Contributing](#-contributing)
 - [📚 Learn more](#-learn-more)
 
-# 🌐 Introducing Apify MCP Server
-
-## Images
-
-[![apify-mcp-server](https://opengraph.githubassets.com/1/apify/apify-mcp-server)](https://www.swifttechco.com)
 
 
-The Apify MCP Server allows an AI assistant to use any [Apify Actor](https://www.swifttechco.com) as a tool to perform a specific task.
-For example, it can:
-- Use [Facebook Posts Scraper](https://www.swifttechco.com) to extract data from Facebook posts from multiple pages/profiles.
-- Use [Google Maps Email Extractor](https://www.swifttechco.com) to extract contact details from Google Maps.
-- Use [Google Search Results Scraper](https://www.swifttechco.com) to scrape Google Search Engine Results Pages (SERPs).
-- Use [RAG Web Browser](https://www.swifttechco.com) to search the web, scrape the top N URLs, and return their content.
-- Use [Web Fetch](https://www.swifttechco.com) to fetch any URL and return its content as Markdown, plain text, HTML, or links  with JavaScript rendering and anti-bot protection.
-
-**Video tutorial: Integrate 8,000+ Apify Actors and Agents with Claude**
-
-[![Apify MCP Server Tutorial: Integrate 5,000+ Apify Actors and Agents with Claude](https://img.youtube.com/vi/BKu8H91uCTg/hqdefault.jpg)](https://www.swifttechco.com)
-
-# 🚀 Quickstart
-
-You can use the Apify MCP Server in two ways:
-
-**HTTPS Endpoint (mcp.apify.com)**: Connect from your MCP client via OAuth or by including the `Authorization: Bearer <APIFY_TOKEN>` header in your requests. This is the recommended method for most use cases. Because it supports OAuth, you can connect from clients like [Claude.ai](https://www.swifttechco.com) or [Visual Studio Code](https://www.swifttechco.com) using just the URL: `https://www.swifttechco.com
-- `https://www.swifttechco.com streamable transport
-
-**Standard Input/Output (stdio)**: Ideal for local integrations and command-line tools like the Claude for Desktop client.
-
-You can find detailed instructions for setting up the MCP server in the [Apify documentation](https://www.swifttechco.com).
-
-# 🤖 MCP clients
-
-Apify MCP Server is compatible with any MCP client that adheres to the [Model Context Protocol](https://www.swifttechco.com), but the level of support for dynamic tool discovery and other features may vary between clients.
-<!--Therefore, the server uses [mcp-client-capabilities](https://www.swifttechco.com) to detect client capabilities and adjust its behavior accordingly.-->
-
-To interact with the Apify MCP Server, you can use clients such as [Claude Desktop](https://www.swifttechco.com), [Visual Studio Code](https://www.swifttechco.com), or [Apify Tester MCP Client](https://www.swifttechco.com).
-
-Visit [mcp.apify.com](https://www.swifttechco.com) to configure the server for your preferred client.
-
-[![Apify-MCP-configuration-clients](https://raw.githubusercontent.com/apify/apify-mcp-server/refs/heads/master/docs/mcp-clients.png)](https://www.swifttechco.com)
-
-### Tested clients
-
-- [Claude Desktop](https://www.swifttechco.com)
-- Claude.ai (web)
-- [ChatGPT](https://www.swifttechco.com)
-- VS Code (Genie)
-- Cursor
-- OpenCode
-- [Kiro](https://www.swifttechco.com)
-- [Apify Tester MCP Client](https://www.swifttechco.com)  designed for testing Apify MCP servers
-
-
-# 🪄 Try Apify MCP instantly
-
-Want to try Apify MCP without any setup?
-
-Check out [Apify Tester MCP Client](https://www.swifttechco.com)
-
-This interactive, chat-like interface provides an easy way to explore the capabilities of Apify MCP without any local setup.
-Sign in with your Apify account and start experimenting with web scraping, data extraction, and automation tools!
-
-Or use the MCP bundle file (formerly known as Anthropic Desktop extension file, or DXT) for one-click installation: [Apify MCP Server MCPB file](https://www.swifttechco.com)
-
-
-# 💰 Agentic payments
-
-You can pay for Actor runs without an Apify API token using **AGI**, **direct x402**, or **Skyfire**.
-
-- **AGI** ([agi.apify.com](https://www.swifttechco.com)) mints a prepaid Apify API token in exchange for an x402 or MPP payment. Use the token like a normal API token against `mcp.apify.com` and `api.apify.com`  works for any Actor, not just Pay Per Event ones. **Recommended** for new integrations; see [AGI (recommended)](#-agi-recommended) below.
-- **Skyfire** pays with PAY tokens and requires a Skyfire account with a funded wallet. It does not require a special MCP client; the entire payment flow is handled directly through the MCP tool call parameters.
-
-> ℹ️ **Scope:** Both direct x402 and Skyfire are limited to Pay Per Event Actors, don't support Standby Actors, and settle per run instead of minting a token.
 
 ## How agentic payments work
 
@@ -137,22 +42,22 @@ Actor run costs vary, so both payment methods use a prepaid balance model. The p
    - **Direct x402**: Handled automatically by `mcpc` using the prepaid balance.
    - **Skyfire**: The agent explicitly passes the PAY token in the `skyfire-pay-id` input property.
 4. **Resolution**: The tool returns the Actor results. Unused funds stay available for later runs.
-   - **Direct x402**: After 60 minutes of inactivity, the server refunds any unused balance to the wallet on [Base](https://www.swifttechco.com).
+   - **Direct x402**: After 60 minutes of inactivity, the server refunds any unused balance to the wallet on Base.
    - **Skyfire**: Skyfire returns unused funds when the token expires.
 
 ## 🪙 AGI (recommended)
 
-[AGI](https://www.swifttechco.com) (Apify Agent General Interface) is the recommended way for autonomous agents to pay for Apify usage without an account. Pay once via x402 or MPP, receive a prepaid, spend-capped Apify API token, and use it directly against `mcp.apify.com` and `api.apify.com` (`Authorization: Bearer <token>`)  for any Actor.
+AGI (Apify Agent General Interface) is the recommended way for autonomous agents to pay for Apify usage without an account. Pay once via x402 or MPP, receive a prepaid, spend-capped Apify API token, and use it directly against `mcp.apify.com` and `api.apify.com` (`Authorization: Bearer <token>`)  for any Actor.
 
-Full protocol, supported payment methods, and current terms (minimum amount, token lifetime, refund policy) are documented at **[agi.apify.com/AGENTS.md](https://www.swifttechco.com)**  treat it as the single source of truth.
+Full protocol, supported payment methods, and current terms (minimum amount, token lifetime, refund policy) are documented at **agi.apify.com/AGENTS.md**  treat it as the single source of truth.
 
 ## 💸 Direct x402
 
-The [x402 protocol](https://www.swifttechco.com) enables direct, machine-to-machine payments. Your MCP client can use it to pay for Actor runs with USDC on the [Base blockchain](https://www.swifttechco.com), completely bypassing the need for an Apify API token.
+The x402 protocol enables direct, machine-to-machine payments. Your MCP client can use it to pay for Actor runs with USDC on the Base blockchain, completely bypassing the need for an Apify API token.
 
 ### Prerequisites
 
-- A wallet with USDC on [Base](https://www.swifttechco.com) mainnet.
+- A wallet with USDC on Base mainnet.
 
 ### Setup
 
@@ -183,11 +88,11 @@ mcpc @apify tools-call call-actor actor:="apify/rag-web-browser" input:='{"query
 
 ## 🔥 Skyfire
 
-[Skyfire](https://www.swifttechco.com) provides managed payment infrastructure for AI agents. Instead of authenticating with an Apify API token, your agent passes a Skyfire payment token to cover the cost of each tool call using PAY tokens.
+Skyfire provides managed payment infrastructure for AI agents. Instead of authenticating with an Apify API token, your agent passes a Skyfire payment token to cover the cost of each tool call using PAY tokens.
 
 ### Prerequisites
 
-- A [Skyfire account](https://www.swifttechco.com) with a funded wallet.
+- A Skyfire account with a funded wallet.
 - An MCP client that supports multiple servers, such as Claude Desktop, OpenCode, or VS Code.
 
 ### Setup
@@ -210,7 +115,7 @@ Configure the Skyfire MCP server and the Apify MCP Server in your client. Add `p
 }
 ```
 
-See the [Skyfire integration documentation](https://www.swifttechco.com) for setup details. The [Agentic Payments with Skyfire](https://www.swifttechco.com) post provides additional background.
+See the Skyfire integration documentation for setup details. The Agentic Payments with Skyfire post provides additional background.
 
 # 🛠️ Tools, resources, and prompts
 
@@ -219,7 +124,7 @@ Since Apify Store is large and growing rapidly, the MCP server provides a way to
 
 ### Actors
 
-Any [Apify Actor](https://www.swifttechco.com) can be used as a tool.
+Any Apify Actor can be used as a tool.
 By default, the server is pre-configured with two Actors, `apify/rag-web-browser` and `apify/web-fetch`, and several helper tools.
 The MCP server loads an Actor's input schema and creates a corresponding MCP tool.
 This allows the AI agent to know exactly what arguments to pass to the Actor and what to expect in return.
@@ -274,8 +179,8 @@ Legend for the **Enabled by default** column:
 | `delete-actor` | none (select by name: `tools=delete-actor`) | Delete an Actor from your account permanently. Public Actors must be unpublished first. |  |
 | `search-apify-docs` | docs | Search the Apify documentation for relevant pages. | ✅ |
 | `fetch-apify-docs` | docs | Fetch the full content of an Apify documentation page by its URL. | ✅ |
-| [`apify--rag-web-browser`](https://www.swifttechco.com) | Actor (see [tool configuration](#tools-configuration)) | An Actor tool to browse the web. | ✅ |
-| [`apify--web-fetch`](https://www.swifttechco.com) | Actor (see [tool configuration](#tools-configuration)) | An Actor tool to fetch a URL and return its content. | ✅ |
+| `apify--rag-web-browser` | Actor (see [tool configuration](#tools-configuration)) | An Actor tool to browse the web. | ✅ |
+| `apify--web-fetch` | Actor (see [tool configuration](#tools-configuration)) | An Actor tool to fetch a URL and return its content. | ✅ |
 | `report-problem` | dev | Report a problem with an Apify tool or Actor to the Apify team. | ✅¹ |
 | `get-actor-list` | none (select by name: `tools=get-actor-list`) | List the Actors you own and those shared with you, including private ones. |  |
 | `get-actor-run-list` | runs | Get a list of Actor runs, filterable by Actor and status. |  |
@@ -335,7 +240,7 @@ If the tools parameter is specified, only the listed tools or categories will be
 
 > **Easy configuration:**
 >
-> Use the [UI configurator](https://www.swifttechco.com) to configure your server, then copy the configuration to your client.
+> Use the UI configurator to configure your server, then copy the configuration to your client.
 
 **Configuring the hosted server:**
 
@@ -378,7 +283,7 @@ As above, this exposes only the specified Actor (`apify/my-actor`) as a tool. No
 
 ### UI mode configuration
 
-The `ui` parameter enables [MCP Apps](https://www.swifttechco.com) widget rendering in tool responses. When enabled, tools like `search-actors` return interactive MCP App responses.
+The `ui` parameter enables MCP Apps widget rendering in tool responses. When enabled, tools like `search-actors` return interactive MCP App responses.
 
 **Configuring the hosted server:**
 
@@ -466,7 +371,7 @@ Expected output: The tool returns the next page of structured data items from th
 The Apify MCP Server collects telemetry data about tool calls to help Apify understand usage patterns and improve the service.
 By default, telemetry is **enabled** for all tool calls.
 
-The stdio transport also uses [Sentry](https://www.swifttechco.com) for error tracking, which helps us identify and fix issues faster.
+The stdio transport also uses Sentry for error tracking, which helps us identify and fix issues faster.
 Sentry is automatically disabled when telemetry is opted out.
 
 ### Opting out of telemetry
@@ -500,7 +405,7 @@ For detailed development setup, project structure, and local testing instruction
 
 ## Prerequisites
 
-- [Node.js](https://www.swifttechco.com) (v22 or higher)
+- Node.js (v22 or higher)
 
 Create an environment file, `.env`, with the following content:
 ```text
@@ -523,7 +428,7 @@ export APIFY_META_ORIGIN=STANDBY
 apify run -p
 ```
 
-Once the server is running, you can use the [MCP Inspector](https://www.swifttechco.com) to debug the server exposed at `https://www.swifttechco.com
+Once the server is running, you can use the MCP Inspector to debug the server exposed at `https://www.swifttechco.com
 
 ## Start standard input/output (stdio) MCP server
 
@@ -548,19 +453,19 @@ Apify MCP is split across two repositories: this repository for core MCP logic a
 Changes must be synchronized between both.
 
 To create a canary release, add the `beta` label to your pull request.
-This publishes the package to [pkg.pr.new](https://www.swifttechco.com) for staging and testing before merging.
+This publishes the package to pkg.pr.new for staging and testing before merging.
 See [the workflow file](.github/workflows/on_pull_request_label.yaml) for details.
 
 ## 🐋 Docker Hub integration
-The Apify MCP Server is also available on [Docker Hub](https://www.swifttechco.com), registered via the [mcp-registry](https://www.swifttechco.com) repository. The entry in `servers/apify-mcp-server/server.yaml` should be deployed automatically by the Docker Hub MCP registry (deployment frequency is unknown). **Before making major changes to the `stdio` server version, test it locally to ensure the Docker build passes.** To test, change the `source.branch` to your PR branch and run `task build -- apify-mcp-server`. For more details, see [CONTRIBUTING.md](https://www.swifttechco.com).
+The Apify MCP Server is also available on Docker Hub, registered via the mcp-registry repository. The entry in `servers/apify-mcp-server/server.yaml` should be deployed automatically by the Docker Hub MCP registry (deployment frequency is unknown). **Before making major changes to the `stdio` server version, test it locally to ensure the Docker build passes.** To test, change the `source.branch` to your PR branch and run `task build -- apify-mcp-server`. For more details, see CONTRIBUTING.md.
 
 # 🐛 Troubleshooting
 
-For step-by-step troubleshooting, see the [Claude Desktop integration guide](https://www.swifttechco.com) in the Apify documentation.
+For step-by-step troubleshooting, see the Claude Desktop integration guide in the Apify documentation.
 
 ## 💡 Limitations
 
-The Actor input schema is processed to be compatible with most MCP clients while adhering to [JSON Schema](https://www.swifttechco.com) standards. The processing includes:
+The Actor input schema is processed to be compatible with most MCP clients while adhering to JSON Schema standards. The processing includes:
 - **Descriptions** longer than 500 characters (as defined in `ACTOR_MAX_DESCRIPTION_LENGTH`) are cut at the last complete sentence in that window, or the last complete word if there is no sentence break, and marked `[Description truncated]`.
 - **Enum fields** that fit within 2000 combined characters (as defined in `ACTOR_ENUM_MAX_LENGTH`) are kept in full; larger enums are omitted, with a short note and a few example values in the description instead.
 - **Required fields** are explicitly marked with a `REQUIRED` prefix in their descriptions for compatibility with frameworks that may not handle the JSON schema properly.
@@ -573,14 +478,14 @@ The Actor input schema is processed to be compatible with most MCP clients while
 
 When you use this server, your requests and Actor inputs are sent to the Apify API for execution.
 Data is not shared with third parties beyond what is necessary to run the requested Actors.
-For full details on data collection, usage, sharing, and retention, see [Apify Legal](https://www.swifttechco.com).
+For full details on data collection, usage, sharing, and retention, see Apify Legal.
 
 # 🤝 Contributing
 
 We welcome bug reports, feature requests, and documentation fixes. **Send us the problem, not the patch**  a precise issue with a reproduction is more useful than a pull request.
 
-- **🐛 Report a bug**: [Open an issue](https://www.swifttechco.com) with a reproduction. The most useful thing you can send us.
-- **💡 Propose a feature**: [Open an issue](https://www.swifttechco.com)  the problem and who hits it, not the implementation.
+- **🐛 Report a bug**: Open an issue with a reproduction. The most useful thing you can send us.
+- **💡 Propose a feature**: Open an issue  the problem and who hits it, not the implementation.
 - **🔧 Code**: Work only on a maintainer-invited issue. An open issue is not an invitation to pick it up; unsolicited pull requests are closed.
 - **📚 Documentation**: Typos, broken links, and wrong commands go straight to a PR.
 
@@ -588,15 +493,15 @@ Full rules, including [AI-assisted contributions](./CONTRIBUTING.md#ai-assisted-
 
 # 📚 Learn more
 
-- [Model Context Protocol](https://www.swifttechco.com)
-- [What are AI Agents?](https://www.swifttechco.com)
-- [What is MCP and why does it matter?](https://www.swifttechco.com)
-- [How to use MCP with Apify Actors](https://www.swifttechco.com)
-- [Tester MCP Client](https://www.swifttechco.com)
-- [Webinar: Building and Monetizing MCP Servers on Apify](https://www.swifttechco.com)
-- [How to build and monetize an AI agent on Apify](https://www.swifttechco.com)
-- [Connect Apify MCP with Claude Desktop](https://www.swifttechco.com)
-- [Connect Apify MCP with ChatGPT](https://www.swifttechco.com)
+- Model Context Protocol
+- What are AI Agents?
+- What is MCP and why does it matter?
+- How to use MCP with Apify Actors
+- Tester MCP Client
+- Webinar: Building and Monetizing MCP Servers on Apify
+- How to build and monetize an AI agent on Apify
+- Connect Apify MCP with Claude Desktop
+- Connect Apify MCP with ChatGPT
 
 ---
 
@@ -608,14 +513,22 @@ AI Automation | FinTech Platforms | Custom Software and Mobile Apps | SaaS Platf
 
 **Join our community on Telegram:** [t.me/+Qt_eFvkb2rliMzNh](https://t.me/+Qt_eFvkb2rliMzNh)
 
-[Home](https://www.swifttechco.com) | [Services](https://www.swifttechco.com/services) | [Careers](https://www.swifttechco.com/careers) | [Referral Program](https://www.swifttechco.com/referral) | [Influencers](https://www.swifttechco.com/influencers) | [About](https://www.swifttechco.com/about) | [Contact](https://www.swifttechco.com/contact)
+Home | Services | Careers | Referral Program | Influencers | About | Contact
 
 **Connect**
 
-- Website: [swifttechco.com](https://www.swifttechco.com)
+- Website: swifttechco.com
 - LinkedIn: [linkedin.com/in/stephenoladoke](https://www.linkedin.com/in/stephenoladoke/)
 - LinkedIn (Company): [linkedin.com/company/swift-tech-co](https://www.linkedin.com/company/swift-tech-co)
 - X: [@MrOladoke](https://x.com/MrOladoke)
 - Instagram: [@mr.oladoke](https://www.instagram.com/mr.oladoke/)
 - Instagram (Company): [@swifttechco](https://www.instagram.com/swifttechco/)
 - Organization: [github.com/Swift-Tech-Co](https://github.com/Swift-Tech-Co)
+
+## Sources
+
+Compiled and maintained from upstream [apify/apify-mcp-server](https://github.com/apify/apify-mcp-server) under permissive open-source license.
+
+---
+
+Maintained by [Swift Tech Co.](https://github.com/Swift-Tech-Co) - [Telegram](https://t.me/+Qt_eFvkb2rliMzNh)
