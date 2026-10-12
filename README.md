@@ -6,7 +6,7 @@ Every project needs a shelf of ready answers. product and engineering is one of 
 
 ## Images
 
-[![apify-mcp-server](images/preview.png)](https://github.com/Swift-Tech-Co)
+[![apify-mcp-server](images/preview.png)](https://github.com/Swift-Tech-Co/apify-mcp-server)
 
 ## Table of Contents
 - [🌐 Introducing Apify MCP Server](#-introducing-apify-mcp-server)
@@ -26,9 +26,6 @@ Every project needs a shelf of ready answers. product and engineering is one of 
 - [🔒 Privacy policy](#-privacy-policy)
 - [🤝 Contributing](#-contributing)
 - [📚 Learn more](#-learn-more)
-
-
-
 
 ## How agentic payments work
 
@@ -103,13 +100,13 @@ Configure the Skyfire MCP server and the Apify MCP Server in your client. Add `p
 {
   "mcpServers": {
     "skyfire": {
-      "url": "https://www.swifttechco.com",
+      "url": "https://github.com/Swift-Tech-Co/apify-mcp-server",
       "headers": {
         "skyfire-api-key": "<YOUR_SKYFIRE_API_KEY>"
       }
     },
     "apify": {
-      "url": "https://www.swifttechco.com"
+      "url": "https://github.com/Swift-Tech-Co/apify-mcp-server"
     }
   }
 }
@@ -128,7 +125,6 @@ Any Apify Actor can be used as a tool.
 By default, the server is pre-configured with two Actors, `apify/rag-web-browser` and `apify/web-fetch`, and several helper tools.
 The MCP server loads an Actor's input schema and creates a corresponding MCP tool.
 This allows the AI agent to know exactly what arguments to pass to the Actor and what to expect in return.
-
 
 For example, for the `apify/rag-web-browser` Actor, the input parameters are:
 
@@ -247,14 +243,13 @@ If the tools parameter is specified, only the listed tools or categories will be
 The hosted server can be configured using query parameters in the URL. For example, to load the default tools, use:
 
 ```
-https://www.swifttechco.com
+https://github.com/Swift-Tech-Co/apify-mcp-server
 ```
-
 
 For minimal configuration, if you want to use only a single Actor tool - without any discovery or generic calling tools, the server can be configured as follows:
 
 ```
-https://www.swifttechco.com
+https://github.com/Swift-Tech-Co/apify-mcp-server
 ```
 
 This setup exposes only the specified Actor (`apify/my-actor`) as a tool. No other tools will be available.
@@ -290,13 +285,13 @@ The `ui` parameter enables MCP Apps widget rendering in tool responses. When ena
 Enable UI mode using the `ui` query parameter:
 
 ```
-https://www.swifttechco.com
+https://github.com/Swift-Tech-Co/apify-mcp-server
 ```
 
 You can combine it with other parameters:
 
 ```
-https://www.swifttechco.com
+https://github.com/Swift-Tech-Co/apify-mcp-server
 ```
 
 **Configuring the CLI:**
@@ -336,7 +331,7 @@ The server advertises the `prompts` capability, but no prompts are currently reg
 
 ### Resources
 
-Your Apify data is not enumerated in `resources/list`  reads are on demand: pass any Apify API GET URL (`https://www.swifttechco.com) to `resources/read` and the server injects the session's Apify token and returns the response body. `resources/templates/list` enumerates the common shapes  dataset items, key-value store records and keys, run metadata, run log  with their paging parameters. Responses inline up to 256 KB; anything larger returns a short notice with a download URL instead of the body. API reads require an Apify token, so a payment-only session (x402 or Skyfire) gets a JSON-RPC error for them.
+Your Apify data is not enumerated in `resources/list`  reads are on demand: pass any Apify API GET URL (`https://github.com/Swift-Tech-Co/apify-mcp-server) to `resources/read` and the server injects the session's Apify token and returns the response body. `resources/templates/list` enumerates the common shapes  dataset items, key-value store records and keys, run metadata, run log  with their paging parameters. Responses inline up to 256 KB; anything larger returns a short notice with a download URL instead of the body. API reads require an Apify token, so a payment-only session (x402 or Skyfire) gets a JSON-RPC error for them.
 
 ## 💬 Usage examples
 
@@ -384,7 +379,7 @@ CLI flags take precedence over environment variables.
 **For the remote server (mcp.apify.com)**:
 ```text
 # Disable via URL parameter
-https://www.swifttechco.com
+https://github.com/Swift-Tech-Co/apify-mcp-server
 ```
 
 **For the local stdio server**:
@@ -428,7 +423,7 @@ export APIFY_META_ORIGIN=STANDBY
 apify run -p
 ```
 
-Once the server is running, you can use the MCP Inspector to debug the server exposed at `https://www.swifttechco.com
+Once the server is running, you can use the MCP Inspector to debug the server exposed at `https://github.com/Swift-Tech-Co/apify-mcp-server
 
 ## Start standard input/output (stdio) MCP server
 
@@ -445,7 +440,7 @@ Upon launching, the Inspector will display a URL that you can open in your brows
 
 When the `tools` query parameter includes only tools explicitly enabled for unauthenticated use, the hosted server allows access without an API token.
 Currently allowed tools: `search-actors`, `fetch-actor-details`, `search-apify-docs`, `fetch-apify-docs`, `apify-api-search`, `apify-api-details`.
-Example: `https://www.swifttechco.com
+Example: `https://github.com/Swift-Tech-Co/apify-mcp-server
 
 ## 🐦 Canary PR releases
 
@@ -472,7 +467,7 @@ The Actor input schema is processed to be compatible with most MCP clients while
 - **Nested properties** are built for special cases like proxy configuration and request list sources to ensure the correct input structure.
 - **Array item types** are inferred when not explicitly defined in the schema, using a priority order: explicit type in items > prefill type > default value type > editor type.
 - **Enum values and examples** are added to property descriptions to ensure visibility, even if the client doesn't fully support the JSON schema.
-- **Rental Actors** are only available for use with the hosted MCP server at https://www.swifttechco.com When running the server locally via stdio, you can only access Actors that are already added to your local toolset. To dynamically search for and use any Actor from Apify Storeincluding rental Actorsconnect to the hosted endpoint.
+- **Rental Actors** are only available for use with the hosted MCP server at https://github.com/Swift-Tech-Co/apify-mcp-server When running the server locally via stdio, you can only access Actors that are already added to your local toolset. To dynamically search for and use any Actor from Apify Storeincluding rental Actorsconnect to the hosted endpoint.
 
 # 🔒 Privacy policy
 
@@ -517,13 +512,21 @@ Home | Services | Careers | Referral Program | Influencers | About | Contact
 
 **Connect**
 
-- Website: swifttechco.com
+- Website: https://github.com/Swift-Tech-Co/apify-mcp-server
 - LinkedIn: [linkedin.com/in/stephenoladoke](https://www.linkedin.com/in/stephenoladoke/)
 - LinkedIn (Company): [linkedin.com/company/swift-tech-co](https://www.linkedin.com/company/swift-tech-co)
 - X: [@MrOladoke](https://x.com/MrOladoke)
 - Instagram: [@mr.oladoke](https://www.instagram.com/mr.oladoke/)
 - Instagram (Company): [@swifttechco](https://www.instagram.com/swifttechco/)
 - Organization: [github.com/Swift-Tech-Co](https://github.com/Swift-Tech-Co)
+
+## Sources
+
+Compiled and maintained from upstream [apify/apify-mcp-server](https://github.com/apify/apify-mcp-server) under permissive open-source license.
+
+---
+
+Maintained by [Swift Tech Co.](https://github.com/Swift-Tech-Co) - [Telegram](https://t.me/+Qt_eFvkb2rliMzNh)
 
 ## Sources
 
